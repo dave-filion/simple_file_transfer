@@ -51,7 +51,7 @@ void* getPackets(void* data){
 
 void* makeFile(void* data) {
 
-  int done = FALSE;
+  FILE* file = NULL;
 
   for(;;) {
     
@@ -64,10 +64,21 @@ void* makeFile(void* data) {
       unlock(ph);
 
       if (p->fragment == DUMMY_FRAG_NUM) {
-	printf("*******Transmission COMPLETE! FUCK YEAH********\n");
-      } else {
-	printf("%s", p->contents);
-      }
+	// Close file and make new one for next transmission
+	fclose(file);
+	file = NULL;
+	} 
+      else {
+	  // Write contents to current file
+
+	  if (file == NULL) {
+	    // open new file
+	    file = fopen(OUTFILE, "w");
+	  }
+
+	  printf("%s", p->contents);
+	  fputs(p->contents, file);
+	}
     }
   }
 }
