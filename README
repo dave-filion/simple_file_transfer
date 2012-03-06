@@ -1,0 +1,14 @@
+Welcome to TRANSMEETER -> the really bad file transfer service.
+
+To run, simply:
+
+./build.sh
+./startServer.sh
+
+And for a sample transfer:
+./sendFile.sh
+
+To send a different file, use the client like so...
+./client/bin/sender <FILENAME> <IP_TO_SEND_TO>
+
+Enjoy!
