@@ -1,10 +1,6 @@
 #include<stdio.h>
 #include"constants.h"
 
-#define NUM 1000
-#define BEGIN 48
-#define END 122
-
 int main(){
 
   FILE *f = fopen(INFILE, "w");

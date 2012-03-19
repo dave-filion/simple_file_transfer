@@ -65,6 +65,7 @@ void* makeFile(void* data) {
 
       if (p->fragment == DUMMY_FRAG_NUM) {
 	// Close file and make new one for next transmission
+	printf("-->Transmeet Complete!\n");
 	fclose(file);
 	file = NULL;
 	} 
@@ -76,7 +77,7 @@ void* makeFile(void* data) {
 	    file = fopen(OUTFILE, "w");
 	  }
 
-	  printf("%s", p->contents);
+	  printf("-->Recieving Packet\n");
 	  fputs(p->contents, file);
 	}
     }

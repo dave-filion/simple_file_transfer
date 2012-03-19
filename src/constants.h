@@ -7,3 +7,8 @@
 #define SERVER_PORT 6789
 #define INFILE "before.txt"
 #define OUTFILE "after.txt"
+
+#define NUM 100
+#define BEGIN 48
+#define END 122
+
