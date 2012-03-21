@@ -20,4 +20,11 @@ int main() {
    
    printf("%s\n", p_s);
    
+   Packet* newP = (Packet*) deserializePacket(p_s);
+   
+   printf("%p\n", newP);
+   
+   printf("FRAG: %d\n", newP->fragment);
+   printf("CONTENTS: %s\n", newP->contents);
+   
 }

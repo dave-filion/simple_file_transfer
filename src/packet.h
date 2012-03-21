@@ -23,7 +23,9 @@ Packet* initPacket(char*, int);
 Header* initHeader(char* filename, char* username);
 char* serializeHeader(Header*);
 char* serializePacket(Packet*);
-Packet* deserialize(char*, Packet*);
+
+Header* deserializeHeader(char*);
+Packet* deserializePacket(char*);
 
 /* PACKETHOLDER FUNCTIONS */
 void initPacketHolder(PacketHolder*);

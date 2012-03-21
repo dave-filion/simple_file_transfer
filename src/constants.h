@@ -8,7 +8,7 @@
 #define AND '&'
 
 // Size of actual char array that gets transmitted
-#define TRANSMIT_SIZE 1036
+#define TRANSMIT_SIZE 1024
 
 // Number of slots in packet holder
 #define NUM_PACKET_SLOTS 10

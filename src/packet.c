@@ -13,7 +13,6 @@ Packet* initPacket(char* c, int f) {
   if (c != NULL) {
     strcpy( p->contents, c );
   }
-
   return p;
 }
 
@@ -50,7 +49,6 @@ char* serializeHeader(Header* h) {
    return s;
 }
 
-
 char* serializePacket(Packet* p) {
   char* buffer = malloc(TRANSMIT_SIZE);
   char* temp = buffer;
@@ -78,24 +76,53 @@ char* serializePacket(Packet* p) {
   return buffer;
 }
 
+Header* deserializeHeader(char* s) {
+   char filename[32];
+   char username[32];
+   
+   int i = 0;
+   while ((*s) != AND) {
+      filename[i] = (*s);
+      i++;
+      s++;
+   }
+   
+   s++;
+   i = 0;
+   while ((*s) != 0) {
+      username[i] = (*s);
+      s++;
+      i++;
+   }
+   
+   Header* h = initHeader(filename, username);
+   return h;
+}
 
-Packet* deserialize(char* s, Packet* p) {
-  int* temp = (int*) s;
-  char c[PACKET_SIZE];
-
-  int fragment;
-  fragment = *temp;
-  temp++;
-
-  int i;
-  for (i = 0; i < PACKET_SIZE; i++) {
-    c[i] = *((char*) temp);
-    temp++;
-  }
-
-  p = initPacket(c, fragment);
-
-  return p;
+Packet* deserializePacket(char* s) {   
+   char b[8];
+   
+   int i = 0;
+   while ((*s) != AND) {
+      b[i] = (*s);
+      i++;
+      s++;
+   }
+   
+   int fragment;
+   fragment = atoi(b);
+   
+   s++;
+   i = 0;
+   char contents[PACKET_SIZE];
+   while ((*s) != 0) {
+      contents[i] = (*s);
+      s++;
+      i++;
+   }
+   
+   Packet* p = initPacket(contents, fragment);
+   return p;
 }
 
 /* PACKETHOLDER FUNCTIONS */
