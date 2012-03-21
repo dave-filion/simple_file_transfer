@@ -2,8 +2,8 @@ Welcome to sendr & recievr -> the really bad file transfer service.
 
 To run, simply:
 
-./build.sh
-./startServer.sh
+make
+./runServer.sh
 
 And for a sample transfer:
 ./sendFile.sh

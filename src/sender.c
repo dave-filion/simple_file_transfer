@@ -49,7 +49,6 @@ void* makePackets(void * data) {
   int fragment = 1;
 
   char* s = malloc(PACKET_SIZE);
-  Packet* p = malloc(sizeof(Packet));
 
   for(;;){
 
@@ -58,9 +57,9 @@ void* makePackets(void * data) {
       s = fgets(s, PACKET_SIZE, file);
 
       if (s == NULL) {
-	      while(ph->lock == TRUE) { /* wait for opening */ }
+         while(ph->lock == TRUE) { /* wait for opening */ }
 	      lock(ph);
-	      addPacket(ph, initPacket(NULL, DUMMY_FRAG_NUM, p));
+	      addPacket(ph, initPacket(NULL, DUMMY_FRAG_NUM));
 	      unlock(ph);
 	      return;
       }
@@ -69,11 +68,11 @@ void* makePackets(void * data) {
       lock(ph);
       
       if (s == NULL) {
-         addPacket(ph, initPacket(NULL, DUMMY_FRAG_NUM, p));
+         addPacket(ph, initPacket(NULL, DUMMY_FRAG_NUM));
 	      unlock(ph);
 	      return;
 	   } else {
-         addPacket(ph, initPacket(s, fragment++, p));
+         addPacket(ph, initPacket(s, fragment++));
          unlock(ph);    	      
 	   }
     } else {
@@ -84,26 +83,27 @@ void* makePackets(void * data) {
 }
 
 void* sendPackets(void* data) {
+   // Send Header
+   Header* h = initHeader(filename, "dave");
+   char* h_s = serializeHeader(h);
+   sendto(sock, h_s, strlen(h_s), 0, (struct sockaddr *) &servAddr, sizeof(servAddr));
+
+   // Send the packets
   for (;;) {
     if (!isEmpty(ph)) {
       char *s;
       Packet* p = malloc(sizeof(Packet));
 
-      while (ph->lock == TRUE){ /* Wait for it to be unlocked */}
+      while (isLocked(ph)){ /* Wait for it to be unlocked */}
       lock(ph);
-      p = removePacket(ph, p);
+      p = removePacket(ph, p); // Get packet
       unlock(ph);
 
-      s = serialize(p, s);
+      s = serializePacket(p); // Convert into sendable char array
+
+      sendto(sock, s, strlen(s), 0, (struct sockaddr *) &servAddr, sizeof(servAddr));
 	
-      if (p->fragment == DUMMY_FRAG_NUM) {
-	sendto(sock, s, (PACKET_SIZE * 4) + 4, 0, (struct sockaddr *)
-	       &servAddr, sizeof(servAddr));
-	return;
-      } else {
-	sendto(sock, s, (PACKET_SIZE * 4) + 4, 0, (struct sockaddr *)
-	       &servAddr, sizeof(servAddr));
-      }
+      if (p->fragment == DUMMY_FRAG_NUM) return;
     }
   }
 }

@@ -5,8 +5,9 @@
 #include"packet.h"
 
 /* PACKET FUNCTIONS */
-Packet* initPacket(char* c, int f, Packet* p) {
-  p->fragment = f;
+Packet* initPacket(char* c, int f) {
+   Packet* p = malloc(sizeof(Packet));
+   p->fragment = f;
 
   // Check for dummy pointer
   if (c != NULL) {
@@ -16,18 +17,62 @@ Packet* initPacket(char* c, int f, Packet* p) {
   return p;
 }
 
+Header* initHeader(char* filename, char* username) {
+   Header* h = malloc(sizeof(Header));
+   strcpy((char*) h->filename, filename);
+   strcpy((char*) h->username, username);
+   return h;
+}
 
-char* serialize(Packet* p, char* buffer) {
-  buffer = malloc(((PACKET_SIZE) * 4) + 4);
+char* serializeHeader(Header* h) {
+   char* s = malloc(HEADER_SIZE);   
+   memset(s, 0, HEADER_SIZE);
+   char* temp = s;
+
+   int i = 0;
+   while (h->filename[i] != 0) {
+      (*temp) = h->filename[i];
+      temp++;
+      i++;
+   }
+   
+   (*temp) = AND;
+   temp++;
+
+   i = 0;
+   while (h->username[i] != 0) {
+      (*temp) = h->username[i];
+      temp++;
+      i++;
+   }
+   (*temp) = 0;
+   
+   return s;
+}
+
+
+char* serializePacket(Packet* p) {
+  char* buffer = malloc(TRANSMIT_SIZE);
   char* temp = buffer;
+  int frag;
+  char b[8];
   
-  *((int*) temp) = p->fragment;
-  temp += 4;
+  // convert fragment to string (ugh)
+  frag = p->fragment;
+  sprintf(b, "%d", frag);
 
   int i;
+  for (i = 0; i < strlen(b); i++) {
+     (*temp) = b[i];
+     temp++;
+  }
+  
+  (*temp) = AND;
+  temp++;
+    
   for (i = 0; i < PACKET_SIZE; i++) {
-    *((int*) temp) = (int) p->contents[i];
-    temp += 4;
+     (*temp) = p->contents[i];
+     temp++;
   }
 
   return buffer;
@@ -48,8 +93,7 @@ Packet* deserialize(char* s, Packet* p) {
     temp++;
   }
 
-  p = malloc(sizeof(Packet));
-  p = initPacket(c, fragment, p);
+  p = initPacket(c, fragment);
 
   return p;
 }
@@ -89,6 +133,10 @@ int isFull(PacketHolder* ph) {
       return FALSE;
   }
   return TRUE;
+}
+
+int isLocked(PacketHolder* ph) {
+   return ph->lock;
 }
 
 Packet* addPacket(PacketHolder* ph, Packet* p) {
