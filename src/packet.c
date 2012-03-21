@@ -16,6 +16,7 @@ Packet* initPacket(char* c, int f, Packet* p) {
   return p;
 }
 
+
 char* serialize(Packet* p, char* buffer) {
   buffer = malloc(((PACKET_SIZE) * 4) + 4);
   char* temp = buffer;
@@ -95,7 +96,7 @@ Packet* addPacket(PacketHolder* ph, Packet* p) {
   for (i = 0; i < NUM_PACKET_SLOTS; i++) {
     // Find an open spot
     if (ph->packets[i] == NULL) {
-      //printf("Adding packet with frag %d in slot %d\n", p->fragment, i);
+      printf("Adding packet with frag %d in slot %d\n", p->fragment, i);
       ph->packets[i] = p;
       return p;
     }

@@ -20,6 +20,7 @@ int main(int argC, char** argV) {
 
   // Arg1 is file to be transferred
   filename = argV[1];
+  
   // Arg2 is address
   char* address = argV[2];
 
@@ -47,27 +48,34 @@ int main(int argC, char** argV) {
 void* makePackets(void * data) {
   int fragment = 1;
 
+  char* s = malloc(PACKET_SIZE);
+  Packet* p = malloc(sizeof(Packet));
+
   for(;;){
-    char* s = malloc(PACKET_SIZE);
-    Packet* p = malloc(sizeof(Packet));
 
     if (!isFull(ph)) {
 
       s = fgets(s, PACKET_SIZE, file);
 
       if (s == NULL) {
-	while(ph->lock == TRUE) { /* wait for opening */ }
-	lock(ph);
-	addPacket(ph, initPacket(NULL, DUMMY_FRAG_NUM, p));
-	unlock(ph);
-	return;
+	      while(ph->lock == TRUE) { /* wait for opening */ }
+	      lock(ph);
+	      addPacket(ph, initPacket(NULL, DUMMY_FRAG_NUM, p));
+	      unlock(ph);
+	      return;
       }
 
       while(ph->lock == TRUE) { /* wait for opening */ }
       lock(ph);
-      addPacket(ph, initPacket(s, fragment++, p));
-      unlock(ph);    
-  
+      
+      if (s == NULL) {
+         addPacket(ph, initPacket(NULL, DUMMY_FRAG_NUM, p));
+	      unlock(ph);
+	      return;
+	   } else {
+         addPacket(ph, initPacket(s, fragment++, p));
+         unlock(ph);    	      
+	   }
     } else {
       printf("ERROR: ITS FULL! WAITING TO EMPTY\n");
     }

@@ -1,4 +1,5 @@
-#define PACKET_SIZE 10
+#define PACKET_SIZE 1000
+
 #define NUM_PACKET_SLOTS 10
 #define TRUE 1
 #define FALSE 0

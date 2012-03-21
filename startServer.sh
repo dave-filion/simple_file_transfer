@@ -4,4 +4,4 @@
 cd test
 
 # Start listening
-../server/bin/reciever
+../bin/reciever

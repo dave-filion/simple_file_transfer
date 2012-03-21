@@ -65,7 +65,7 @@ void* makeFile(void* data) {
 
       if (p->fragment == DUMMY_FRAG_NUM) {
 	// Close file and make new one for next transmission
-	printf("-->Transmeet Complete!\n");
+	printf("-->Transfer Complete!\n");
 	fclose(file);
 	file = NULL;
 	} 
