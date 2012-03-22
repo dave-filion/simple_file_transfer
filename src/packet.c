@@ -8,6 +8,7 @@
 Packet* initPacket(char* c, int f) {
    Packet* p = malloc(sizeof(Packet));
    p->fragment = f;
+   memset(p->contents, 0, PACKET_SIZE);
 
   // Check for dummy pointer
   if (c != NULL) {
@@ -145,6 +146,11 @@ void unlock(PacketHolder* ph) {
   ph->lock = FALSE;
 }
 
+void getLock(PacketHolder* ph) {
+   while(isLocked(ph)){/* wait for unlocked state */}
+   lock(ph);
+}
+
 int isEmpty(PacketHolder* ph) {
   int i;
   for (i = 0; i < NUM_PACKET_SLOTS; i++) {
@@ -173,7 +179,6 @@ Packet* addPacket(PacketHolder* ph, Packet* p) {
     // Find an open spot
     if (ph->packets[i] == NULL) {
       ph->packets[i] = p;
-      printf("Adding %d to %d\n", p->fragment, i);
       return p;
     }
   }
@@ -199,6 +204,5 @@ Packet* removePacket(PacketHolder* ph, Packet* p) {
 
   p = ph->packets[minIndex];
   ph->packets[minIndex] = NULL; // Remove from array
-  printf("REMOVING %d FROM SLOT %d\n", p->fragment, minIndex);
   return p;
 }

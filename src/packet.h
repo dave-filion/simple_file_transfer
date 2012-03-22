@@ -32,7 +32,9 @@ void initPacketHolder(PacketHolder*);
 
 void lock(PacketHolder*);
 void unlock(PacketHolder*);
+void getLock(PacketHolder*);
 int isLocked(PacketHolder*);
+
 
 int isEmpty(PacketHolder*);
 int isFull(PacketHolder*);

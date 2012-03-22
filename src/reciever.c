@@ -35,34 +35,33 @@ int main(int argC, char** argV){
 void* getPackets(void* data){
    char *s = malloc(TRANSMIT_SIZE);
    int count = 0;
-   
-   for(;;) {
-      if (!isLocked(ph)){
-         lock(ph);
-         
-         // Recieve String
-         recvfrom(sock, s, TRANSMIT_SIZE, 0, (struct sockaddr*) &clntAddr, &cliAddrLen);
 
-         if (count == 0) {
-            // Must be header
-            Header* h = deserializeHeader(s);
-            printf("^^^^^^ Getting %s From %s\n ^^^^^^^", h->filename, h->username);
-            memset(s, 0, TRANSMIT_SIZE);
-            count++;
-         } else {
-            Packet* p = deserializePacket(s);
-            addPacket(ph, p);
+   for(;;) { 
+      if (!isFull(ph)){        
+         int result = recvfrom(sock, s, TRANSMIT_SIZE, 0, (struct sockaddr*) &clntAddr, &cliAddrLen);
 
-            if (p->fragment == DUMMY_FRAG_NUM) {
-               // Done here, in reality you would keep this open,
-               // since it is a server...
+      // If there is a recieved message...
+         if (result > 0) {
+            if (count == 0) {
+               // Must be header
+               Header* h = deserializeHeader(s);
+               printf("^^^^^^ Getting %s From %s\n ^^^^^^^", h->filename, h->username);
+               memset(s, 0, TRANSMIT_SIZE);
+               count++;
+            } else {
+               Packet* p = deserializePacket(s);
+               getLock(ph);
+               addPacket(ph, p);
                unlock(ph);
-               pthread_exit();
+
+               if (p->fragment == DUMMY_FRAG_NUM) {
+                  // Done here, in reality you would keep this open,
+                  // since it is a server...
+                  pthread_exit();
+               }
+               count++;
             }
-            count++;
          }
-         
-         unlock(ph);
       }
    }
 }
@@ -76,47 +75,32 @@ void* makeFile(void* data) {
    now = current->tv_sec;
    start = now;
 
-   for(;;) {
-      if (!isLocked(ph)) {
-         lock(ph);
-         
-         if (!isEmpty(ph)) {
-            Packet* p;
+   for(;;) {        
+      if (!isEmpty(ph)) {
+         Packet* p;
 
-            p = removePacket(ph, p);
-
-            if (p->fragment == DUMMY_FRAG_NUM) {
-               // Close file and make new one for next transmission
-               printf("-->Transfer Complete!\n");
-               fclose(file);
-               // Since this is for testing, it will now exit
-               // in a very unserver-like manner.
-               unlock(ph);
-               pthread_exit();
-            } else {
-               // Write contents to current file
-               if (file == NULL) {
-                  file = fopen(OUTFILE, "w");
-               }  
-
-               printf("-->Recieving Packet\n");
-               fputs(p->contents, file);
-            }
-         }
-         
-         unlock(ph);      
-      }
-      
-      // Time check
-      gettimeofday(current, NULL);
-      now = current->tv_sec;
-      if (now - start > 15) {
-         printf("Dying due to old age\n");
-         fclose(file);
+         getLock(ph);
+         p = removePacket(ph, p);
          unlock(ph);
-         exit(-1);
+
+         if (p->fragment == DUMMY_FRAG_NUM) {
+            // Close file and make new one for next transmission
+            printf("-->Transfer Complete!\n");
+            fclose(file);
+            // Since this is for testing, it will now exit
+            // in a very unserver-like manner.
+            pthread_exit();
+         } else {
+            // Write contents to current file
+            if (file == NULL) {
+               file = fopen(OUTFILE, "w");
+            }  
+
+            printf("-->Recieving Packet\n");
+            fputs(p->contents, file);
+         }
       }
-   }
+   }      
 }
 
 void initSocket(){

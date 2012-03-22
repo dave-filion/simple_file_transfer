@@ -25,7 +25,7 @@
 #define OUTFILE "after.txt"
 
 // Number of chars in makeBigFile file
-#define NUM 10000
+#define NUM 100000
 
 // Ascii values
 #define BEGIN 48
