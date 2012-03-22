@@ -75,10 +75,7 @@ void* makePackets(void * data) {
          addPacket(ph, initPacket(s, fragment++));
          unlock(ph);    	      
 	   }
-    } else {
-      printf("ERROR: ITS FULL! WAITING TO EMPTY\n");
-    }
-    
+    } 
   }
 }
 

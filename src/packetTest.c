@@ -2,7 +2,10 @@
 #include<stdlib.h>
 #include<string.h>
 
+#include<sys/time.h>
+
 #include"packet.h"
+
 
 int main() {
    
@@ -26,5 +29,23 @@ int main() {
    
    printf("FRAG: %d\n", newP->fragment);
    printf("CONTENTS: %s\n", newP->contents);
+   
+   struct timeval current;
+   gettimeofday(&current, NULL);
+   
+   int last = 0;
+   
+   int cur = current.tv_sec;
+   
+   if (last == 0) {
+      last = cur;
+   } else {
+      if ((cur - last) > 15) {
+         printf("15 seconds up!\n");
+      } else {
+         printf("Less then 15, %d to be precise\n", cur - last);
+         last = cur;
+      }
+   }
    
 }

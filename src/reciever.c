@@ -38,27 +38,22 @@ void* getPackets(void* data){
    int count = 0;
    for(;;) {
 
-  // Recieve String
+      // Recieve String
       recvfrom(sock, s, TRANSMIT_SIZE, 0, (struct sockaddr*) &clntAddr, &cliAddrLen);
 
       if (count == 0) {
-     // Must be header
+         // Must be header
          Header* h = deserializeHeader(s);
          printf("Getting %s From %s\n", h->filename, h->username);
          memset(s, 0, TRANSMIT_SIZE);
          count++;
       } else {
-
-         int result;
-         result = recvfrom(sock, s, TRANSMIT_SIZE, 0, (struct sockaddr*) &clntAddr, &cliAddrLen);
-         if (result > 0) {
-            Packet* p = deserializePacket(s);
-            while(ph->lock == TRUE) { /* Wait for unlock */ }
-            lock(ph);
-            addPacket(ph, p);
-            unlock(ph);
-            count++;
-         }
+         Packet* p = deserializePacket(s);
+         while(ph->lock == TRUE) { /* Wait for unlock */ }
+         lock(ph);
+         addPacket(ph, p);
+         unlock(ph);
+         count++;
       }
    }
 }
@@ -66,36 +61,37 @@ void* getPackets(void* data){
 void* makeFile(void* data) {
 
    FILE* file = NULL;
-
+   int last = 0;
+   struct timeval* lastAction = malloc(sizeof(struct timeval));
+   struct timeval* now = malloc(sizeof(struct timeval));
+   lastAction = NULL;
+   now = NULL;
+   
    for(;;) {
-
       if (!isEmpty(ph)) {
          Packet* p;
 
-      while(ph->lock == TRUE) { /* Wait for unlock */ }
-      lock(ph);
-      p = removePacket(ph, p);
-      unlock(ph);
+         while(ph->lock == TRUE) { /* Wait for unlock */ }
+         lock(ph);
+         p = removePacket(ph, p);
+         unlock(ph);
+         
+         if (p->fragment == DUMMY_FRAG_NUM) {
+            // Close file and make new one for next transmission
+            printf("-->Transfer Complete!\n");
+            fclose(file);
+            file = NULL;
+         } else {
+            // Write contents to current file
+            if (file == NULL) {
+               file = fopen(OUTFILE, "w");
+            }
 
-      if (p->fragment == DUMMY_FRAG_NUM) {
-      // Close file and make new one for next transmission
-         printf("-->Transfer Complete!\n");
-         fclose(file);
-         file = NULL;
-      } 
-      else {
-      // Write contents to current file
-
-         if (file == NULL) {
-         // open new file
-            file = fopen(OUTFILE, "w");
+            printf("-->Recieving Packet\n");
+            fputs(p->contents, file);
          }
-
-         printf("-->Recieving Packet\n");
-         fputs(p->contents, file);
       }
    }
-}
 }
 
 void initSocket(){
