@@ -51,32 +51,24 @@ void* makePackets(void * data) {
   char* s = malloc(PACKET_SIZE);
 
   for(;;){
-
-    if (!isFull(ph)) {
-
-      s = fgets(s, PACKET_SIZE, file);
-
-      if (s == NULL) {
-         while(ph->lock == TRUE) { /* wait for opening */ }
-	      lock(ph);
-	      addPacket(ph, initPacket(NULL, DUMMY_FRAG_NUM));
-	      unlock(ph);
-	      return;
-      }
-
-      while(ph->lock == TRUE) { /* wait for opening */ }
-      lock(ph);
+     while(!isLocked(ph)){
+         lock(ph);
+	     
+         if (!isFull(ph)) {
+           s = fgets(s, PACKET_SIZE, file);
       
-      if (s == NULL) {
-         addPacket(ph, initPacket(NULL, DUMMY_FRAG_NUM));
-	      unlock(ph);
-	      return;
-	   } else {
-         addPacket(ph, initPacket(s, fragment++));
-         unlock(ph);    	      
-	   }
-    } 
-  }
+           if (s == NULL) {
+              addPacket(ph, initPacket(NULL, DUMMY_FRAG_NUM));
+	           unlock(ph);
+              pthread_exit(0);
+	         } else {
+               addPacket(ph, initPacket(s, fragment++));
+	         }	         
+         }
+         
+         unlock(ph); 
+      }
+   }  
 }
 
 void* sendPackets(void* data) {
@@ -87,21 +79,23 @@ void* sendPackets(void* data) {
 
    // Send the packets
   for (;;) {
-    if (!isEmpty(ph)) {
-      char *s;
-      Packet* p = malloc(sizeof(Packet));
+     while(!isLocked(ph)) {
+        lock(ph);
 
-      while (isLocked(ph)){ /* Wait for it to be unlocked */}
-      lock(ph);
-      p = removePacket(ph, p); // Get packet
-      unlock(ph);
+        if (!isEmpty(ph)) {
+           char *s;
+           Packet* p = malloc(sizeof(Packet));
 
-      s = serializePacket(p); // Convert into sendable char array
+           p = removePacket(ph, p); // Get packet
+           s = serializePacket(p); // Convert into sendable char array
 
-      sendto(sock, s, strlen(s), 0, (struct sockaddr *) &servAddr, sizeof(servAddr));
+           sendto(sock, s, strlen(s), 0, (struct sockaddr *) &servAddr, sizeof(servAddr));
 	
-      if (p->fragment == DUMMY_FRAG_NUM) return;
-    }
+           if (p->fragment == DUMMY_FRAG_NUM) pthread_exit(0);
+        }
+        
+        unlock(ph);
+     }
   }
 }
   

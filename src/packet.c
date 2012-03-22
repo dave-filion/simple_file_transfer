@@ -140,6 +140,7 @@ void initPacketHolder(PacketHolder* ph) {
 void lock(PacketHolder* ph) {
   ph->lock = TRUE;
 }
+
 void unlock(PacketHolder* ph) {
   ph->lock = FALSE;
 }
@@ -158,7 +159,7 @@ int isFull(PacketHolder* ph) {
   for (i = 0; i < NUM_PACKET_SLOTS; i++) {
     if (ph->packets[i] == NULL)
       return FALSE;
-  }
+   }
   return TRUE;
 }
 
@@ -171,14 +172,13 @@ Packet* addPacket(PacketHolder* ph, Packet* p) {
   for (i = 0; i < NUM_PACKET_SLOTS; i++) {
     // Find an open spot
     if (ph->packets[i] == NULL) {
-      printf("Adding packet with frag %d in slot %d\n", p->fragment, i);
       ph->packets[i] = p;
+      printf("Adding %d to %d\n", p->fragment, i);
       return p;
     }
   }
-  printf("ERROR: COULD NOT FIND ANY OPENINGS!\n");
+  printf("ERROR IN ADDPACKET\n");
 }
-
 
 Packet* removePacket(PacketHolder* ph, Packet* p) {
   int i;
@@ -188,17 +188,17 @@ Packet* removePacket(PacketHolder* ph, Packet* p) {
   for (i = 0; i < NUM_PACKET_SLOTS; i++) {
     if (ph->packets[i] != NULL) {
       if (minIndex == -1){
-	minIndex = i;
+	      minIndex = i;
       } else {
-	if (ph->packets[i] < ph->packets[minIndex]) {
-	  minIndex = i;
-	}
+	      if (ph->packets[i] < ph->packets[minIndex]) {
+	         minIndex = i;
+	      }
       }
     }
   }
 
   p = ph->packets[minIndex];
   ph->packets[minIndex] = NULL; // Remove from array
-  //printf("REMOVING PACKET FROM SLOT %d\n", minIndex);
+  printf("REMOVING %d FROM SLOT %d\n", p->fragment, minIndex);
   return p;
 }

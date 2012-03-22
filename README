@@ -2,11 +2,17 @@ Welcome to sendr & recievr -> the really bad file transfer service.
 
 To run, simply:
 
+make clean
+
 make
-./runServer.sh
+
+./runServer.sh &
 
 And for a sample transfer:
 ./sendFile.sh
+
+And to compare the before and after files:
+./compare.sh
 
 To send a different file, use the client like so...
 ./client/bin/sender <FILENAME> <IP_TO_SEND_TO>

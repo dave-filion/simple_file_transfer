@@ -9,5 +9,3 @@ mv before.txt test
 # Send to server
 bin/sender test/before.txt 127.0.0.1
 
-# Run comparison
-bin/compare test/before.txt test/after.txt

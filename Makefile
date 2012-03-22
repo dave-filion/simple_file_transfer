@@ -7,3 +7,4 @@ all: src/sender.c src/reciever.c src/makeBigFile.c src/compare.c
 
 clean:
 	rm -rf bin/*
+	rm -rf test/*

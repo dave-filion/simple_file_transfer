@@ -33,63 +33,88 @@ int main(int argC, char** argV){
 }
 
 void* getPackets(void* data){
-
    char *s = malloc(TRANSMIT_SIZE);
    int count = 0;
+   
    for(;;) {
-
-      // Recieve String
-      recvfrom(sock, s, TRANSMIT_SIZE, 0, (struct sockaddr*) &clntAddr, &cliAddrLen);
-
-      if (count == 0) {
-         // Must be header
-         Header* h = deserializeHeader(s);
-         printf("Getting %s From %s\n", h->filename, h->username);
-         memset(s, 0, TRANSMIT_SIZE);
-         count++;
-      } else {
-         Packet* p = deserializePacket(s);
-         while(ph->lock == TRUE) { /* Wait for unlock */ }
+      if (!isLocked(ph)){
          lock(ph);
-         addPacket(ph, p);
+         
+         // Recieve String
+         recvfrom(sock, s, TRANSMIT_SIZE, 0, (struct sockaddr*) &clntAddr, &cliAddrLen);
+
+         if (count == 0) {
+            // Must be header
+            Header* h = deserializeHeader(s);
+            printf("^^^^^^ Getting %s From %s\n ^^^^^^^", h->filename, h->username);
+            memset(s, 0, TRANSMIT_SIZE);
+            count++;
+         } else {
+            Packet* p = deserializePacket(s);
+            addPacket(ph, p);
+
+            if (p->fragment == DUMMY_FRAG_NUM) {
+               // Done here, in reality you would keep this open,
+               // since it is a server...
+               unlock(ph);
+               pthread_exit();
+            }
+            count++;
+         }
+         
          unlock(ph);
-         count++;
       }
    }
 }
 
 void* makeFile(void* data) {
-
    FILE* file = NULL;
-   int last = 0;
-   struct timeval* lastAction = malloc(sizeof(struct timeval));
-   struct timeval* now = malloc(sizeof(struct timeval));
-   lastAction = NULL;
-   now = NULL;
-   
+   struct timeval* current = malloc(sizeof(struct timeval));
+   int start;
+   int now;
+   gettimeofday(current, NULL);
+   now = current->tv_sec;
+   start = now;
+
    for(;;) {
-      if (!isEmpty(ph)) {
-         Packet* p;
-
-         while(ph->lock == TRUE) { /* Wait for unlock */ }
+      if (!isLocked(ph)) {
          lock(ph);
-         p = removePacket(ph, p);
-         unlock(ph);
          
-         if (p->fragment == DUMMY_FRAG_NUM) {
-            // Close file and make new one for next transmission
-            printf("-->Transfer Complete!\n");
-            fclose(file);
-            file = NULL;
-         } else {
-            // Write contents to current file
-            if (file == NULL) {
-               file = fopen(OUTFILE, "w");
-            }
+         if (!isEmpty(ph)) {
+            Packet* p;
 
-            printf("-->Recieving Packet\n");
-            fputs(p->contents, file);
+            p = removePacket(ph, p);
+
+            if (p->fragment == DUMMY_FRAG_NUM) {
+               // Close file and make new one for next transmission
+               printf("-->Transfer Complete!\n");
+               fclose(file);
+               // Since this is for testing, it will now exit
+               // in a very unserver-like manner.
+               unlock(ph);
+               pthread_exit();
+            } else {
+               // Write contents to current file
+               if (file == NULL) {
+                  file = fopen(OUTFILE, "w");
+               }  
+
+               printf("-->Recieving Packet\n");
+               fputs(p->contents, file);
+            }
          }
+         
+         unlock(ph);      
+      }
+      
+      // Time check
+      gettimeofday(current, NULL);
+      now = current->tv_sec;
+      if (now - start > 15) {
+         printf("Dying due to old age\n");
+         fclose(file);
+         unlock(ph);
+         exit(-1);
       }
    }
 }
